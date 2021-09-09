@@ -4,3 +4,4 @@ requests==2.25.1
 snowflake_connector_python==2.5.1
 streamlit==0.88.0
 snowflake==0.0.3
+xlrd==2.0.1
