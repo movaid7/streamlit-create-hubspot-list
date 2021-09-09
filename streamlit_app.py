@@ -83,7 +83,7 @@ elif 'id' not in st.session_state:
         choice = 'MID'
     else:
         choice = 'UID'
-
+    st.text(searchOption)
     continue_button2 = form.form_submit_button(label='Continue')
 
     if continue_button2 and searchOption is not None:
