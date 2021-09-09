@@ -99,6 +99,8 @@ elif 'upload' not in st.session_state:
     df = pd.DataFrame()
 
     if st.session_state.file.name.lower().endswith(('.xlsx', '.xls')):
+        df = pd.read_excel(
+            st.session_state.file, sheet_name=st.session_state.sheet, dtype='object')
         try:
             df = pd.read_excel(
                 st.session_state.file, sheet_name=st.session_state.sheet, dtype='object')
