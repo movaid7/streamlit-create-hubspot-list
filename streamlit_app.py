@@ -33,7 +33,7 @@ form = st.form(key='query')
 if 'validated' not in st.session_state:
     password = form.text_input('Enter password to enable content',
                                type="password", help='Request access if needed')
-    submit_button = form.form_submit_button(label='Submit')
+    submit_button = form.form_submit_button(label='Login')
 
     if password == st.secrets["appPass"] and submit_button:
         st.session_state.validated = True
@@ -81,6 +81,7 @@ elif 'id' not in st.session_state:
 
 # State 3: Ask user to indicate which exact column in the uploaded file correlates with the selected merchant identifier
 elif 'col' not in st.session_state:
+    st.text(st.session_state)
     sheetName = ""
     colName = ""
 
