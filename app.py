@@ -122,6 +122,8 @@ elif 'upload' not in st.session_state:
         form.subheader('Identfier Column Data')
         form.write(df)
     else:
+        form.write(df.columns)
+        form.write(st.session_state.col)
         st.session_state.error = '☠️ Column was NOT found in file'
 
     try:
