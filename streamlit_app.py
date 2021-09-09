@@ -19,10 +19,30 @@ st.markdown("<h2 style='text-align: center;'>Create a list on HubSpot from a lis
             unsafe_allow_html=True)
 st.markdown("***")
 
+# passForm = st.form(key='pass')
 
+# password = passForm.text_input('Enter password to enable content',
+#                          type="password", help='Request access if needed')
+# submit_button = passForm.form_submit_button(label='Submit')
+
+# if password == st.secrets["appPass"] and submit_button:
+
+# Streamlit App setup as a single state-based form
 form = st.form(key='query')
 
-if 'file' not in st.session_state:
+if 'validated' not in st.session_state:
+    password = form.text_input('Enter password to enable content',
+                               type="password", help='Request access if needed')
+    submit_button = form.form_submit_button(label='Submit')
+
+    if password == st.secrets["appPass"] and submit_button:
+        st.session_state.validated = True
+    elif submit_button:
+        form.markdown(f"<h3 style='text-align: center;color:Tomato'>ERROR: ☠️ Incorrect Password</h3>",
+                      unsafe_allow_html=True)
+
+# State 1: Prompt File Uploaded
+elif 'file' not in st.session_state:
     form.markdown("<h3 style='text-align: center;'>Upload Excel/CSV List</h3>",
                   unsafe_allow_html=True)
     uploaded_file = form.file_uploader("")
@@ -38,11 +58,12 @@ if 'file' not in st.session_state:
         else:
             st.session_state.error = '☠️ Unsupported File Type (.xlsx, .xls & .csv supported)'
     try:
-        form.markdown(f"<h3 style='text-align: center;color:red'>ERROR: {st.session_state.error}</h3>",
+        form.markdown(f"<h3 style='text-align: center;color:Tomato'>ERROR: {st.session_state.error}</h3>",
                       unsafe_allow_html=True)
     except:
         pass
 
+# State 2: Ask user to select which merchant identifier is present in the uploaded file
 elif 'id' not in st.session_state:
     st.markdown(f"<h4 style='text-align: center;'>File Uploaded: '{st.session_state.file.name}'</h3>",
                 unsafe_allow_html=True)
@@ -58,6 +79,7 @@ elif 'id' not in st.session_state:
     if continue_button and searchOption is not None:
         st.session_state.id = searchOption
 
+# State 3: Ask user to indicate which exact column in the uploaded file correlates with the selected merchant identifier
 elif 'col' not in st.session_state:
     sheetName = ""
     colName = ""
@@ -76,7 +98,7 @@ elif 'col' not in st.session_state:
     form.markdown("***")
 
     try:
-        form.markdown(f"<h3 style='text-align: center;color:red'>ERROR: {st.session_state.error}</h3>",
+        form.markdown(f"<h3 style='text-align: center;color:Tomato'>ERROR: {st.session_state.error}</h3>",
                       unsafe_allow_html=True)
     except:
         pass
@@ -94,6 +116,7 @@ elif 'col' not in st.session_state:
         else:
             st.session_state.error = 'Missing Input!'
 
+# State 4: Attempt loading the selected column from the file and if successful ask user to provide a unique name for the created list on HubSpot
 elif 'upload' not in st.session_state:
     fileCheckPass = True
     df = pd.DataFrame()
@@ -127,11 +150,11 @@ elif 'upload' not in st.session_state:
         st.session_state.error = '☠️ Column was NOT found in file'
 
     try:
-        form.markdown(f"<h3 style='text-align: center;color:red'>ERROR: {st.session_state.error}</h3>",
+        form.markdown(f"<h3 style='text-align: center;color:Tomato'>ERROR: {st.session_state.error}</h3>",
                       unsafe_allow_html=True)
     except:
         listName = ''
-        form.markdown("<h3 style='text-align: center;'>Enter a name for your list</h3>",
+        form.markdown("<h3 style='text-align: center;'>Enter a UNIQUE name for your list</h3>",
                       unsafe_allow_html=True)
         listName = form.text_input('')
         form.text(' ')
@@ -146,6 +169,7 @@ elif 'upload' not in st.session_state:
             for key in st.session_state.keys():
                 del st.session_state[key]
 
+# State 5: Attempt creating the list on HubSpot and adding the listed merchants to it
 elif 'HSList' not in st.session_state:
     ctx = snowflake.connector.connect(
         user=st.secrets["user"],
@@ -158,12 +182,9 @@ elif 'HSList' not in st.session_state:
 
     sql = st.secrets["sql"]
     cur = ctx.cursor().execute(sql)
-    # dfRet = cur.fetch_pandas_batches()
     dfSQL = cur.fetch_pandas_all()
     dfUpload = st.session_state.upload.to_frame()
 
-    # st.write(dfUpload.head())
-    # st.write(dfSQL.head())
     if st.session_state.id == 'Email':
         dfSQL[st.session_state.id] = dfSQL[st.session_state.id].astype(str)
         dfUpload[st.session_state.id] = dfUpload[st.session_state.id].astype(
@@ -172,11 +193,9 @@ elif 'HSList' not in st.session_state:
         dfSQL[st.session_state.id] = dfSQL[st.session_state.id].astype(int)
         dfUpload[st.session_state.id] = dfUpload[st.session_state.id].astype(
             int)
-
     # try:
     st.session_state.result = pd.merge(
         dfSQL, dfUpload, on=st.session_state.id)
-    # st.write(st.session_state.result.head())
 
     # Create HubSpot List
     hubspotapi = st.secrets["hubspotapi"]
@@ -184,7 +203,6 @@ elif 'HSList' not in st.session_state:
     headers = {'Content-Type': "application/json"}
     body = {"name": st.session_state.list}
     payload = json.dumps(body)
-    # POST to HubSpot
     st.session_state.createListResp = requests.request(
         "POST", writeURL, data=payload, headers=headers)
     HSList = st.session_state.createListResp.json()['listId']
@@ -194,20 +212,19 @@ elif 'HSList' not in st.session_state:
         del st.session_state['error']
 
     if st.session_state.createListResp.status_code == 200:
+        # Add merchants to created HubSpot List
         writeURL = f"https://api.hubapi.com/contacts/v1/lists/{st.session_state.HSList}/add?hapikey={hubspotapi}"
         body = {"emails": st.session_state.result['EMAIL'].tolist()}
         payload = json.dumps(body)
         st.session_state.addListResp = requests.request(
             "POST", writeURL, data=payload, headers=headers)
         if st.session_state.addListResp.status_code == 200:
-            # st.markdown(f"<h3 style='text-align: center;'>href='https://app.hubspot.com/contacts/6412394/lists/{st.session_state.HSList}'Open list on HubSpot</h3>",
-            #             unsafe_allow_html=True)
             st.markdown(f"<h1 style='text-align: center;'> <a href='https://app.hubspot.com/contacts/6412394/lists/{st.session_state.HSList}'target='_blank'> Open list on HubSpot </a> </h1>",
                         unsafe_allow_html=True)
         else:
             st.session_state.error = '☠️ Failed to add merchants to list'
             st.markdown(
-                f"<h3 style='text-align: center;color:red'>ERROR: {st.session_state.error}</h3>", unsafe_allow_html=True)
+                f"<h3 style='text-align: center;color:Tomato'>ERROR: {st.session_state.error}</h3>", unsafe_allow_html=True)
             st.write(st.session_state.addListResp.json()['message'])
             restart_button = form.form_submit_button(label='Start Over')
             if restart_button:
@@ -216,7 +233,7 @@ elif 'HSList' not in st.session_state:
     else:
         st.session_state.error = '☠️ Failed to create list'
         st.markdown(
-            f"<h3 style='text-align: center;color:red'>ERROR: {st.session_state.error}</h3>", unsafe_allow_html=True)
+            f"<h3 style='text-align: center;color:Tomato'>ERROR: {st.session_state.error}</h3>", unsafe_allow_html=True)
         st.write(st.session_state.createListResp.json()['message'])
         restart_button = form.form_submit_button(label='Start Over')
         if restart_button:
@@ -225,5 +242,5 @@ elif 'HSList' not in st.session_state:
 
     # except:
     #     st.session_state.error = '☠️ Unknown Error Occurred'
-    #     form.markdown(f"<h3 style='text-align: center;color:red'>ERROR: {st.session_state.error}</h3>",
+    #     form.markdown(f"<h3 style='text-align: center;color:Tomato'>ERROR: {st.session_state.error}</h3>",
     #                   unsafe_allow_html=True)
