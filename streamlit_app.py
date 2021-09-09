@@ -33,11 +33,11 @@ form = st.form(key='query')
 if 'validated' not in st.session_state:
     password = form.text_input('Enter password to enable content',
                                type="password", help='Request access if needed')
-    submit_button = form.form_submit_button(label='Login')
+    login_button = form.form_submit_button(label='Login')
 
-    if password == st.secrets["appPass"] and submit_button:
+    if password == st.secrets["appPass"] and login_button:
         st.session_state.validated = True
-    elif submit_button:
+    elif login_button:
         form.markdown(f"<h3 style='text-align: center;color:Tomato'>ERROR: ☠️ Incorrect Password</h3>",
                       unsafe_allow_html=True)
 
@@ -74,10 +74,20 @@ elif 'id' not in st.session_state:
     form.text(' ')
     form.text(' ')
 
-    continue_button = form.form_submit_button(label='Continue')
+    choice = ''
+    if searchOption == 'Email':
+        choice = 'Email'
+    elif searchOption == 'VID':
+        choice = 'VID'
+    elif searchOption == 'MID':
+        choice = 'MID'
+    else:
+        choice = 'UID'
 
-    if continue_button and searchOption is not None:
-        st.session_state.id = searchOption
+    continue_button2 = form.form_submit_button(label='Continue')
+
+    if continue_button2 and searchOption is not None:
+        st.session_state.id = choice
 
 # State 3: Ask user to indicate which exact column in the uploaded file correlates with the selected merchant identifier
 elif 'col' not in st.session_state:
@@ -227,8 +237,8 @@ elif 'HSList' not in st.session_state:
             st.markdown(
                 f"<h3 style='text-align: center;color:Tomato'>ERROR: {st.session_state.error}</h3>", unsafe_allow_html=True)
             st.write(st.session_state.addListResp.json()['message'])
-            restart_button = form.form_submit_button(label='Start Over')
-            if restart_button:
+            restart_button2 = form.form_submit_button(label='Start Over')
+            if restart_button2:
                 for key in st.session_state.keys():
                     del st.session_state[key]
     else:
@@ -236,8 +246,8 @@ elif 'HSList' not in st.session_state:
         st.markdown(
             f"<h3 style='text-align: center;color:Tomato'>ERROR: {st.session_state.error}</h3>", unsafe_allow_html=True)
         st.write(st.session_state.createListResp.json()['message'])
-        restart_button = form.form_submit_button(label='Start Over')
-        if restart_button:
+        restart_button3 = form.form_submit_button(label='Start Over')
+        if restart_button3:
             for key in st.session_state.keys():
                 del st.session_state[key]
 
