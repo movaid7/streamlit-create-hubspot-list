@@ -70,24 +70,15 @@ elif 'id' not in st.session_state:
     form.markdown("<h3 style='text-align: center;'>Select the Merchant Identifier that was used in this list</h3>",
                   unsafe_allow_html=True)
     searchOption = form.radio(
-        '', ['UID', 'MID', 'VID', 'Email'])
+        '', ('UID', 'MID', 'VID', 'Email'))
     form.text(' ')
     form.text(' ')
 
-    choice = ''
-    if searchOption == 'Email':
-        choice = 'Email'
-    elif searchOption == 'VID':
-        choice = 'VID'
-    elif searchOption == 'MID':
-        choice = 'MID'
-    else:
-        choice = 'UID'
     form.text(searchOption)
     continue_button2 = form.form_submit_button(label='Continue')
 
     if continue_button2 and searchOption is not None:
-        st.session_state.id = choice
+        st.session_state.id = searchOption
 
 # State 3: Ask user to indicate which exact column in the uploaded file correlates with the selected merchant identifier
 elif 'col' not in st.session_state:
