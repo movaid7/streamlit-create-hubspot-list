@@ -28,9 +28,9 @@ st.markdown("***")
 # if password == st.secrets["appPass"] and submit_button:
 
 # Streamlit App setup as a single state-based form
-form = st.form(key='query')
 
 if 'validated' not in st.session_state:
+    form = st.form(key='query')
     password = form.text_input('Enter password to enable content',
                                type="password", help='Request access if needed')
     login_button = form.form_submit_button(label='Login')
@@ -43,6 +43,7 @@ if 'validated' not in st.session_state:
 
 # State 1: Prompt File Uploaded
 elif 'file' not in st.session_state:
+    form = st.form(key='query')
     form.markdown("<h3 style='text-align: center;'>Upload Excel/CSV List</h3>",
                   unsafe_allow_html=True)
     uploaded_file = form.file_uploader("")
@@ -65,27 +66,24 @@ elif 'file' not in st.session_state:
 
 # State 2: Ask user to select which merchant identifier is present in the uploaded file
 elif 'id' not in st.session_state:
-    form.markdown(f"<h4 style='text-align: center;'>File Uploaded: '{st.session_state.file.name}'</h3>",
-                  unsafe_allow_html=True)
-    form.markdown("<h3 style='text-align: center;'>Select the Merchant Identifier that was used in this list</h3>",
-                  unsafe_allow_html=True)
-    st.session_state.selected = form.selectbox(
-        '', ('UID', 'MID', 'VID', 'Email'))
-    form.text(' ')
-    form.text(' ')
 
-    form.text(st.session_state.selected)
+    form = st.form(key='query')
+    form.markdown("<h3 style='text-align: center;'>Select from below the Merchant Identifier that was used in this list</h3>",
+                  unsafe_allow_html=True)
+
     continue_button2 = form.form_submit_button(label='Continue')
+    if continue_button2 and 'choice' in st.session_state:
+        st.session_state.id = st.session_state.choice
 
-    if continue_button2:
-        st.session_state.id = st.session_state.selected
+    st.session_state.choice = st.radio(
+        '', ['UID', 'MID', 'VID', 'Email'])
+
 
 # State 3: Ask user to indicate which exact column in the uploaded file correlates with the selected merchant identifier
 elif 'col' not in st.session_state:
-    st.text(st.session_state)
+    form = st.form(key='query')
     sheetName = ""
     colName = ""
-
     if st.session_state.file.name.lower().endswith(('.xlsx', '.xls')):
         form.markdown("<h3 style='text-align: center;'>Enter the exact (case-sensitive) name of the SHEET IN YOUR EXCEL FILE that you wish to read data from</h3>",
                       unsafe_allow_html=True)
@@ -120,6 +118,7 @@ elif 'col' not in st.session_state:
 
 # State 4: Attempt loading the selected column from the file and if successful ask user to provide a unique name for the created list on HubSpot
 elif 'upload' not in st.session_state:
+    form = st.form(key='query')
     fileCheckPass = True
     df = pd.DataFrame()
 
@@ -173,6 +172,7 @@ elif 'upload' not in st.session_state:
 
 # State 5: Attempt creating the list on HubSpot and adding the listed merchants to it
 elif 'HSList' not in st.session_state:
+    form = st.form(key='query')
     ctx = snowflake.connector.connect(
         user=st.secrets["user"],
         password=st.secrets["password"],
@@ -188,11 +188,13 @@ elif 'HSList' not in st.session_state:
     dfUpload = st.session_state.upload.to_frame()
 
     if st.session_state.id == 'Email':
-        dfSQL[st.session_state.id] = dfSQL[st.session_state.id].astype(str)
+        dfSQL[st.session_state.id] = dfSQL[st.session_state.id].astype(
+            str)
         dfUpload[st.session_state.id] = dfUpload[st.session_state.id].astype(
             str)
     else:
-        dfSQL[st.session_state.id] = dfSQL[st.session_state.id].astype(int)
+        dfSQL[st.session_state.id] = dfSQL[st.session_state.id].astype(
+            int)
         dfUpload[st.session_state.id] = dfUpload[st.session_state.id].astype(
             int)
     # try:
