@@ -65,20 +65,20 @@ elif 'file' not in st.session_state:
 
 # State 2: Ask user to select which merchant identifier is present in the uploaded file
 elif 'id' not in st.session_state:
-    st.markdown(f"<h4 style='text-align: center;'>File Uploaded: '{st.session_state.file.name}'</h3>",
-                unsafe_allow_html=True)
+    form.markdown(f"<h4 style='text-align: center;'>File Uploaded: '{st.session_state.file.name}'</h3>",
+                  unsafe_allow_html=True)
     form.markdown("<h3 style='text-align: center;'>Select the Merchant Identifier that was used in this list</h3>",
                   unsafe_allow_html=True)
-    searchOption = form.selectbox(
+    st.session_state.selected = form.selectbox(
         '', ('UID', 'MID', 'VID', 'Email'))
     form.text(' ')
     form.text(' ')
 
-    form.text(searchOption)
+    form.text(st.session_state.selected)
     continue_button2 = form.form_submit_button(label='Continue')
 
     if continue_button2:
-        st.session_state.id = searchOption
+        st.session_state.id = st.session_state.selected
 
 # State 3: Ask user to indicate which exact column in the uploaded file correlates with the selected merchant identifier
 elif 'col' not in st.session_state:
