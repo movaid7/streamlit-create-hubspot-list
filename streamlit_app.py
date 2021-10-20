@@ -15,18 +15,24 @@ import snowflake
 import snowflake.connector
 import boto3
 
+# =====================================================================================================================
 # Config and Header
 st.set_page_config(
     page_title="HubSpot List Creation Tool",
     page_icon="🔎"
     # layout="wide"
 )
+
+st.markdown(
+    "![Alt Text](https://i.postimg.cc/DyJGmHZs/animation-500-kuzme348.gif)")
+
 st.markdown("<h1 style='text-align: center;'>HubSpot List Creation Tool</h1>",
             unsafe_allow_html=True)
 st.markdown("<h2 style='text-align: center;'>Create a list on HubSpot from a list of merchants</h2>",
             unsafe_allow_html=True)
 st.markdown("***")
 
+# ====================================================== State 0 ======================================================
 # State 0: Ask user to enter the password to access the form
 if 'validated' not in st.session_state:
     form = st.form(key='query')
@@ -40,6 +46,7 @@ if 'validated' not in st.session_state:
         form.markdown(f"<h3 style='text-align: center;color:Tomato'>ERROR: ☠️ Incorrect Password</h3>",
                       unsafe_allow_html=True)
 
+# ====================================================== State 1 ======================================================
 # State 1: Ask user to upload their merchant list (XLSX or CSV)
 elif 'file' not in st.session_state:
     form = st.form(key='query')
@@ -63,6 +70,7 @@ elif 'file' not in st.session_state:
     except:
         pass
 
+# ====================================================== State 2 ======================================================
 # State 2: Ask user to select which merchant identifier is being used in the uploaded merchant list
 elif 'id' not in st.session_state:
 
@@ -77,7 +85,7 @@ elif 'id' not in st.session_state:
     st.session_state.choice = st.radio(
         '', ['UID', 'MID', 'VID', 'EMAIL'])
 
-
+# ====================================================== State 3 ======================================================
 # State 3: Ask user to provide the exact column name in the uploaded file that correlates with the selected merchant identifier
 elif 'col' not in st.session_state:
     form = st.form(key='query')
@@ -115,6 +123,7 @@ elif 'col' not in st.session_state:
         else:
             st.session_state.error = 'Missing Input!'
 
+# ====================================================== State 4 ======================================================
 # State 4: Attempt extracting the column from the file & if successful ask user to provide a unique name for the list on HubSpot
 elif 'upload' not in st.session_state:
     form = st.form(key='query')
@@ -169,6 +178,7 @@ elif 'upload' not in st.session_state:
             for key in st.session_state.keys():
                 del st.session_state[key]
 
+# ====================================================== State 5 ======================================================
 # State 5: Attempt creating the list on HubSpot and adding the listed merchants to it
 elif 'HSList' not in st.session_state:
     form = st.form(key='query')
@@ -196,7 +206,6 @@ elif 'HSList' not in st.session_state:
             int)
         dfUpload[st.session_state.id] = dfUpload[st.session_state.id].astype(
             int)
-    # try:
     st.session_state.result = pd.merge(
         dfSQL, dfUpload, on=st.session_state.id)
 
