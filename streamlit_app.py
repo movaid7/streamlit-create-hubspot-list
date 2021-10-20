@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""
+
+Streamlit App to allow independent creation of Merchant Lists on HubSpot
+App is setup as a single state-based form
+
+"""
+
 import math
 import requests
 import json
@@ -18,9 +26,6 @@ st.markdown("<h1 style='text-align: center;'>HubSpot List Creation Tool</h1>",
 st.markdown("<h2 style='text-align: center;'>Create a list on HubSpot from a list of merchants</h2>",
             unsafe_allow_html=True)
 st.markdown("***")
-
-
-# Streamlit App setup as a single state-based form
 
 # State 0: Ask user to enter the password to access the form
 if 'validated' not in st.session_state:
