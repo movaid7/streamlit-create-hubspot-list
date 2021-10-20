@@ -76,7 +76,7 @@ elif 'id' not in st.session_state:
         st.session_state.id = st.session_state.choice
 
     st.session_state.choice = st.radio(
-        '', ['UID', 'MID', 'VID', 'Email'])
+        '', ['UID', 'MID', 'VID', 'EMAIL'])
 
 
 # State 3: Ask user to indicate which exact column in the uploaded file correlates with the selected merchant identifier
@@ -187,7 +187,7 @@ elif 'HSList' not in st.session_state:
     dfSQL = cur.fetch_pandas_all()
     dfUpload = st.session_state.upload.to_frame()
 
-    if st.session_state.id == 'Email':
+    if st.session_state.id == 'EMAIL':
         dfSQL[st.session_state.id] = dfSQL[st.session_state.id].astype(
             str)
         dfUpload[st.session_state.id] = dfUpload[st.session_state.id].astype(
