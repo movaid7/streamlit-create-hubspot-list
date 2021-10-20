@@ -19,16 +19,10 @@ st.markdown("<h2 style='text-align: center;'>Create a list on HubSpot from a lis
             unsafe_allow_html=True)
 st.markdown("***")
 
-# passForm = st.form(key='pass')
-
-# password = passForm.text_input('Enter password to enable content',
-#                          type="password", help='Request access if needed')
-# submit_button = passForm.form_submit_button(label='Submit')
-
-# if password == st.secrets["appPass"] and submit_button:
 
 # Streamlit App setup as a single state-based form
 
+# State 0: Ask user to enter the password to access the form
 if 'validated' not in st.session_state:
     form = st.form(key='query')
     password = form.text_input('Enter password to enable content',
@@ -41,7 +35,7 @@ if 'validated' not in st.session_state:
         form.markdown(f"<h3 style='text-align: center;color:Tomato'>ERROR: ☠️ Incorrect Password</h3>",
                       unsafe_allow_html=True)
 
-# State 1: Prompt File Uploaded
+# State 1: Ask user to upload their merchant list (XLSX or CSV)
 elif 'file' not in st.session_state:
     form = st.form(key='query')
     form.markdown("<h3 style='text-align: center;'>Upload Excel/CSV List</h3>",
@@ -64,7 +58,7 @@ elif 'file' not in st.session_state:
     except:
         pass
 
-# State 2: Ask user to select which merchant identifier is present in the uploaded file
+# State 2: Ask user to select which merchant identifier is being used in the uploaded merchant list
 elif 'id' not in st.session_state:
 
     form = st.form(key='query')
@@ -79,7 +73,7 @@ elif 'id' not in st.session_state:
         '', ['UID', 'MID', 'VID', 'EMAIL'])
 
 
-# State 3: Ask user to indicate which exact column in the uploaded file correlates with the selected merchant identifier
+# State 3: Ask user to provide the exact column name in the uploaded file that correlates with the selected merchant identifier
 elif 'col' not in st.session_state:
     form = st.form(key='query')
     sheetName = ""
@@ -116,7 +110,7 @@ elif 'col' not in st.session_state:
         else:
             st.session_state.error = 'Missing Input!'
 
-# State 4: Attempt loading the selected column from the file and if successful ask user to provide a unique name for the created list on HubSpot
+# State 4: Attempt extracting the column from the file & if successful ask user to provide a unique name for the list on HubSpot
 elif 'upload' not in st.session_state:
     form = st.form(key='query')
     fileCheckPass = True
@@ -243,8 +237,3 @@ elif 'HSList' not in st.session_state:
         if restart_button3:
             for key in st.session_state.keys():
                 del st.session_state[key]
-
-    # except:
-    #     st.session_state.error = '☠️ Unknown Error Occurred'
-    #     form.markdown(f"<h3 style='text-align: center;color:Tomato'>ERROR: {st.session_state.error}</h3>",
-    #                   unsafe_allow_html=True)
