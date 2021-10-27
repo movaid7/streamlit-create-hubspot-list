@@ -6,14 +6,11 @@ App is setup as a single state-based form
 
 """
 
-import math
-import requests
 import json
+import requests
 import streamlit as st
 import pandas as pd
-import snowflake
 import snowflake.connector
-import boto3
 
 # =====================================================================================================================
 # Config and Header
@@ -35,6 +32,12 @@ st.markdown("***")
 # ====================================================== State 0 ======================================================
 # State 0: Ask user to enter the password to access the form
 if 'validated' not in st.session_state:
+
+    if 'RESET_ME' in st.session_state:
+        for key in st.session_state.keys():
+            del st.session_state[key]
+        del st.session_state['RESET_ME']
+
     form = st.form(key='query')
     password = form.text_input('Enter password to enable content',
                                type="password", help='Request access if needed')
@@ -196,6 +199,17 @@ elif 'HSList' not in st.session_state:
     dfSQL = cur.fetch_pandas_all()
     dfUpload = st.session_state.upload.to_frame()
 
+    dfSQL.dropna(subset=[st.session_state.id], inplace=True)  # Drop nulls
+    # Drop nulls
+    dfUpload = (dfUpload[~dfUpload.iloc[:, 0].str.contains("nan")])
+    dfSQL.reset_index(drop=True)  # Fix index
+    dfUpload.reset_index(drop=True)  # Fix index
+    # dfUpload = dfUpload[dfUpload != 'nan']
+    # dfUpload = dfUpload[dfUpload != None]
+    # st.write(type(dfUpload))
+    # st.write()
+    # st.write(dfSQL)
+
     if st.session_state.id == 'EMAIL':
         dfSQL[st.session_state.id] = dfSQL[st.session_state.id].astype(
             str)
@@ -206,6 +220,7 @@ elif 'HSList' not in st.session_state:
             int)
         dfUpload[st.session_state.id] = dfUpload[st.session_state.id].astype(
             int)
+
     st.session_state.result = pd.merge(
         dfSQL, dfUpload, on=st.session_state.id)
 
@@ -249,5 +264,5 @@ elif 'HSList' not in st.session_state:
         st.write(st.session_state.createListResp.json()['message'])
         restart_button3 = form.form_submit_button(label='Start Over')
         if restart_button3:
-            for key in st.session_state.keys():
-                del st.session_state[key]
+            st.session_state['RESET_ME'] = 1
+            del st.session_state['validated']
