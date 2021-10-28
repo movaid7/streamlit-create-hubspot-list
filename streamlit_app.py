@@ -12,7 +12,7 @@ import streamlit as st
 import pandas as pd
 import snowflake.connector
 
-# =====================================================================================================================
+# =======================================================================================
 # Config and Header
 st.set_page_config(
     page_title="HubSpot List Creation Tool",
@@ -29,8 +29,12 @@ st.markdown("<h2 style='text-align: center;'>Create a list on HubSpot from a lis
             unsafe_allow_html=True)
 st.markdown("***")
 
+# =======================================================================================
+
 
 def error_screen():
+    """Catch errors from other screens"""
+
     form = st.form(key='query')
     form.markdown(f"<h3 style='text-align: center;color:Tomato'>{st.session_state['error']}</h3>",
                   unsafe_allow_html=True)
@@ -38,8 +42,12 @@ def error_screen():
     if accept_button:
         del st.session_state['error']
 
+# =======================================================================================
+
 
 def login_screen():
+    """Prompt user to login with password"""
+
     form = st.form(key='query')
     password = form.text_input('Enter password to enable content',
                                type="password", help='Request access if needed')
@@ -51,8 +59,12 @@ def login_screen():
         form.markdown(f"<h3 style='text-align: center;color:Tomato'>ERROR: ☠️ Incorrect Password. Please Try Again</h3>",
                       unsafe_allow_html=True)
 
+# =======================================================================================
+
 
 def file_screen():
+    """Prompt user to upload merchant-list file"""
+
     form = st.form(key='query')
     form.markdown("<h3 style='text-align: center;'>Upload Excel/CSV List</h3>",
                   unsafe_allow_html=True)
@@ -68,8 +80,12 @@ def file_screen():
             st.session_state.error = '☠️ Unsupported File Type - .xlsx, .xls & .csv supported'
             return
 
+# =======================================================================================
+
 
 def identifier_screen():
+    """Prompt user to select an identifier to be used"""
+
     form = st.form(key='query')
     form.markdown("<h3 style='text-align: center;'>Select from below the Merchant Identifier that was used in this list</h3>",
                   unsafe_allow_html=True)
@@ -81,8 +97,12 @@ def identifier_screen():
     st.session_state.choice = st.radio(
         '', ['UID', 'MID', 'VID', 'EMAIL'])
 
+# =======================================================================================
+
 
 def col_select_screen():
+    """Prompt user to select column in file that contains the selected identifier"""
+
     form = st.form(key='query')
     sheetName = ""
     colName = ""
@@ -111,8 +131,13 @@ def col_select_screen():
             form.markdown(f"<h3 style='text-align: center;color:Tomato'>ERROR: ☠️ Missing Input</h3>",
                           unsafe_allow_html=True)
 
+# =======================================================================================
+
 
 def upload_screen():
+    """Verify file contains selected column
+       Prompt user to provide a name for the list"""
+
     form = st.form(key='query')
     df = pd.DataFrame()
     form.text(f'File Name: {st.session_state.file.name}')
@@ -126,7 +151,7 @@ def upload_screen():
             form.text('✅ Sheet Found in File')
         except:
             del st.session_state['col']
-            if 'col' in st.session_state:
+            if 'sheet' in st.session_state:
                 del st.session_state['sheet']
             st.session_state.error = '☠️ Sheet was NOT found in file'
             return
@@ -138,11 +163,12 @@ def upload_screen():
                 st.session_state.file, dtype='object')
         except:
             del st.session_state['col']
-            if 'col' in st.session_state:
+            if 'sheet' in st.session_state:
                 del st.session_state['sheet']
             st.session_state.error = '☠️ Failed to open file'
             return
-    # Check Column in file
+
+    # Check Column is in file
     if st.session_state.col in list(df.columns):
         df = df[st.session_state.col].astype(str)
         df.rename(str(st.session_state.id), inplace=True)
@@ -154,7 +180,7 @@ def upload_screen():
         form.write(df)
     else:
         del st.session_state['col']
-        if 'col' in st.session_state:
+        if 'sheet' in st.session_state:
             del st.session_state['sheet']
         st.session_state.error = '☠️ Column was NOT found in file'
         return
@@ -173,8 +199,11 @@ def upload_screen():
         form.markdown("<h3 style='text-align: center;color:Tomato'>ERROR: ☠️ Missing List Name</h3>",
                       unsafe_allow_html=True)
 
+# =======================================================================================
+
 
 def success_screen():
+    """Attempt creating & populating a contact list on HubSpot"""
 
     try:
         ctx = snowflake.connector.connect(
@@ -203,6 +232,7 @@ def success_screen():
         dfSQL.reset_index(drop=True)
         dfUpload.reset_index(drop=True)
 
+        # Change column types
         if st.session_state.id == 'EMAIL':
             dfSQL[st.session_state.id] = dfSQL[st.session_state.id].astype(
                 str)
@@ -230,10 +260,10 @@ def success_screen():
     st.session_state.createListResp = requests.request(
         "POST", writeURL, data=payload, headers=headers)
 
+    # Add merchants to created HubSpot List
     if st.session_state.createListResp.status_code == 200:
         HSList = st.session_state.createListResp.json()['listId']
         st.session_state.HSList = HSList
-        # Add merchants to created HubSpot List
         writeURL = f"https://api.hubapi.com/contacts/v1/lists/{st.session_state.HSList}/add?hapikey={hubspotapi}"
         body = {"emails": st.session_state.result['EMAIL'].tolist()}
         payload = json.dumps(body)
@@ -252,7 +282,9 @@ def success_screen():
         return
 
 
-# Main App States
+# =======================================================================================
+
+# Iterate Through App States
 if 'error' in st.session_state:
     error_screen()
 
@@ -271,5 +303,7 @@ elif 'col' not in st.session_state:
 elif 'upload' not in st.session_state:
     upload_screen()
 
-else:
+elif 'HSList' not in st.session_state:
     success_screen()
+
+# =======================================================================================
